@@ -63,12 +63,10 @@ module.exports = function(fileName, opts) {
         var contentPath = path.join(firstFile.base, fileName),
             mapPath = contentPath + '.map';
         
-        if(!firstFile.sourceMap) {
-            if (/\.css$/.test(fileName)) {
-                sourceNode.add('/*# sourceMappingURL=' + (opts.sourceMappingBaseURL || '') + fileName + '.map' + ' */');
-            } else {
-                sourceNode.add('//# sourceMappingURL=' + (opts.sourceMappingBaseURL || '') + fileName + '.map');
-            }
+        if (/\.css$/.test(fileName)) {
+            sourceNode.add('/*# sourceMappingURL=' + (opts.sourceMappingBaseURL || '') + fileName + '.map' + ' */');
+        } else {
+            sourceNode.add('//# sourceMappingURL=' + (opts.sourceMappingBaseURL || '') + fileName + '.map');
         }
 
         var codeMap = sourceNode.toStringWithSourceMap({
@@ -87,19 +85,15 @@ module.exports = function(fileName, opts) {
             contents: new Buffer(codeMap.code)
         });
       
-        if(firstFile.sourceMap){
-            contentFile.sourceMap = sourceMap;
-        } else {
-            var mapFile = new File({
-                cwd: firstFile.cwd,
-                base: firstFile.base,
-                path: mapPath,
-                contents: new Buffer(JSON.stringify(sourceMap, null, '  '))
-            });
-        }
+        var mapFile = new File({
+            cwd: firstFile.cwd,
+            base: firstFile.base,
+            path: mapPath,
+            contents: new Buffer(JSON.stringify(sourceMap, null, '  '))
+        });
 
         this.emit('data', contentFile);
-        if(!firstFile.sourceMap) this.emit('data', mapFile);
+        this.emit('data', mapFile);
         this.emit('end');
     }
 
