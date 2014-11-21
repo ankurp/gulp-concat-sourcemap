@@ -63,10 +63,12 @@ module.exports = function(fileName, opts) {
         var contentPath = path.join(firstFile.base, fileName),
             mapPath = contentPath + '.map';
         
-        if (/\.css$/.test(fileName)) {
-            sourceNode.add('/*# sourceMappingURL=' + (opts.sourceMappingBaseURL || '') + fileName + '.map' + ' */');
-        } else {
-            sourceNode.add('//# sourceMappingURL=' + (opts.sourceMappingBaseURL || '') + fileName + '.map');
+        if (!firstFile.sourceMap || opts.writeSourceMap) {
+            if (/\.css$/.test(fileName)) {
+                sourceNode.add('/*# sourceMappingURL=' + (opts.sourceMappingBaseURL || '') + fileName + '.map' + ' */');
+            } else {
+                sourceNode.add('//# sourceMappingURL=' + (opts.sourceMappingBaseURL || '') + fileName + '.map');
+            }
         }
 
         var codeMap = sourceNode.toStringWithSourceMap({
@@ -78,13 +80,19 @@ module.exports = function(fileName, opts) {
                                 
         sourceMap.file = path.basename(sourceMap.file);
 
-        var contentFile = new File({
-            cwd: firstFile.cwd,
-            base: firstFile.base,
-            path: contentPath,
-            contents: new Buffer(codeMap.code)
-        });
-      
+        if (firstFile.sourceMap) {
+            contentFile.sourceMap = sourceMap;
+        }
+        
+        if (!firstFile.sourceMap || opts.writeSourceMap) {
+            var contentFile = new File({
+                cwd: firstFile.cwd,
+                base: firstFile.base,
+                path: contentPath,
+                contents: new Buffer(codeMap.code)
+            });
+        }
+
         var mapFile = new File({
             cwd: firstFile.cwd,
             base: firstFile.base,
@@ -93,7 +101,7 @@ module.exports = function(fileName, opts) {
         });
 
         this.emit('data', contentFile);
-        this.emit('data', mapFile);
+        if (!firstFile.sourceMap || opts.writeSourceMap) this.emit('data', mapFile);
         this.emit('end');
     }
 
